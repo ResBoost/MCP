@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir, lstat } from 'node:fs/promises';
-import { resolve, relative } from 'node:path';
+import { resolve, relative, dirname } from 'node:path';
 
 const sourceArg = process.argv.indexOf('--source');
 const source = resolve(sourceArg < 0 ? 'src' : process.argv[sourceArg + 1]);
@@ -28,12 +28,18 @@ assert.deepEqual(card.remotes, [{ type: 'streamable-http', url: 'https://resboos
 assert.equal(JSON.parse(await readFile('package.json', 'utf8')).version, version);
 if (sourceArg < 0) {
   const readme = await readFile('README.md', 'utf8');
-  for (const match of readme.matchAll(/\]\(([^)]+)\)/g)) {
-    const target = match[1];
-    if (/^(?:https?:|#)/.test(target)) continue;
-    await lstat(resolve(target.split('#')[0]));
+  for (const document of ['README.md', 'assets/README.md']) {
+    const contents = await readFile(document, 'utf8');
+    const targets = [
+      ...Array.from(contents.matchAll(/\]\(([^)]+)\)/g), match => match[1]),
+      ...Array.from(contents.matchAll(/(?:src|srcset|href)\s*=\s*["']([^"']+)["']/g), match => match[1]),
+    ];
+    for (const target of targets) {
+      // Root-relative HTML examples refer to the website, not this source snapshot.
+      if (/^(?:https?:|#|\/)/.test(target)) continue;
+      await lstat(resolve(dirname(document), target.split('#')[0]));
+    }
   }
-  assert(!readme.includes('assets/'), 'README references missing brand assets');
   assert(!readme.includes('github.com/LonRes/MCP'), 'README uses the old repository URL');
 }
 console.log('Public-source scan, release metadata and documentation checks passed.');

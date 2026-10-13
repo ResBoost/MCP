@@ -1,8 +1,12 @@
 <div align="center">
 
-<h1>resboost.ai MCP</h1>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
+  <img alt="resboost.ai MCP — London homes for sale, for AI assistants" src="assets/banner-light.svg" width="100%">
+</picture>
 
-London homes for sale, for AI assistants.
+<br/>
 
 [![Streamable HTTP](https://img.shields.io/badge/transport-streamable_HTTP-087f82?style=flat-square&labelColor=171a1d)](#getting-started)
 [![Read only](https://img.shields.io/badge/tools-2_read--only-087f82?style=flat-square&labelColor=171a1d)](#the-tools)
@@ -170,6 +174,11 @@ See [RELEASING.md](RELEASING.md) for the app deployment and publishing procedure
 Source changes must also be applied to the parent app before deploying; syncing
 from an older app will replace this snapshot with that older implementation.
 
+## Brand assets
+
+The [logo and favicon assets](assets/README.md) include light and dark SVG logos,
+a square mark, browser favicons and an Apple touch icon.
+
 ## Licence
 
 The files in this repo are [MIT](LICENSE). The listing data the server returns isn't: it belongs to the agents marketing each home and is published through LonRes. And the resboost.ai name and logo are ours, so please don't use them as your own.
@@ -177,6 +186,8 @@ The files in this repo are [MIT](LICENSE). The listing data the server returns i
 <br/>
 
 <div align="center">
+
+<img src="assets/resboost-mark.svg" alt="resboost.ai" width="56">
 
 <sub>Made in London by <a href="https://resboost.ai">resboost.ai</a> · listing data from <a href="https://www.lonres.com">LonRes</a></sub><br/>
 <sub><a href="CHANGELOG.md">Changelog</a> · <a href="SECURITY.md">Security</a></sub>

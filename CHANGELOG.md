@@ -5,6 +5,8 @@ Versions match the `version` the server reports in its handshake and on its
 
 ## Unreleased
 
+- Add the existing brand assets and restore light/dark README banners.
+
 - Bound request-body reads while streaming and validate the actual Host header.
 - Close per-request MCP servers and defensively redact closed-listing contacts.
 - Stage and validate source syncs before replacing the public snapshot.
