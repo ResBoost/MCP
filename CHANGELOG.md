@@ -3,6 +3,14 @@
 Versions match the `version` the server reports in its handshake and on its
 [registry card](https://resboost.ai/.well-known/mcp/server.json).
 
+## Unreleased
+
+- Bound request-body reads while streaming and validate the actual Host header.
+- Close per-request MCP servers and defensively redact closed-listing contacts.
+- Stage and validate source syncs before replacing the public snapshot.
+- Add pinned release checks, CI and an optional deployed-server smoke check.
+- Correct repository links and remove references to unavailable brand assets.
+
 ## 0.2.0 — 2026-10
 
 - Two public, read-only tools: `search_properties` and `get_property`.

@@ -55,7 +55,7 @@ const summaryView = z.object({
 export const searchOutput = {
   results: z.array(summaryView).describe("Matching homes, lowest price first."),
   resultCount: z.number().describe("Homes in this response; not a total of all matches."),
-  capped: z.boolean().describe(`True when the ${SEARCH_RESULT_LIMIT}-result cap was hit: more homes match, so narrow the filters.`),
+  capped: z.boolean().describe(`True when the ${SEARCH_RESULT_LIMIT}-result cap was hit: more homes may match, so narrow the filters.`),
   appliedFilters: z.array(z.string()).describe("The filters as understood, in words, e.g. '2+ beds'."),
 };
 
@@ -88,7 +88,7 @@ export const MCP_SERVER_VERSION = "0.2.0";
 export const SEARCH_TOOL = {
   name: "search_properties",
   title: "Search properties for sale",
-  description: `Search homes for sale on ${SITE_NAME} (LonRes). Returns at most ${SEARCH_RESULT_LIMIT} matches, lowest price first; when \`capped\` is true more homes match, so narrow the filters (e.g. add postcodes or raise priceMin). Rentals are not searchable. All filters are optional.`,
+  description: `Search homes for sale on ${SITE_NAME} (LonRes). Returns at most ${SEARCH_RESULT_LIMIT} matches, lowest price first; when \`capped\` is true more homes may match, so narrow the filters (e.g. add postcodes or raise priceMin). Rentals are not searchable. All filters are optional.`,
   inputSchema: searchFiltersSchema,
   outputSchema: searchOutput,
 } as const;
@@ -216,8 +216,8 @@ export function createMcpServer() {
             agent: {
               organisation: p.agent.organisation,
               name: p.agent.name,
-              telephone: p.agent.telephone,
-              email: p.agent.email,
+              telephone: live ? p.agent.telephone : null,
+              email: live ? p.agent.email : null,
               officeAddress: p.agent.officeAddress,
             },
             closedOn: p.closedOn,

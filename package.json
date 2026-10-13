@@ -1,0 +1,23 @@
+{
+  "name": "resboost-mcp-source",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Release checks for the public resboost.ai MCP source snapshot",
+  "engines": {
+    "node": ">=22.15"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test && node scripts/check-release.mjs",
+    "check:live": "node scripts/check-live.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "@types/node": "24.13.6",
+    "typescript": "5.9.3",
+    "vitest": "5.0.1",
+    "zod": "3.25.76"
+  }
+}

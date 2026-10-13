@@ -52,6 +52,7 @@ export function registryServer() {
     description: DESCRIPTION,
     version: MCP_SERVER_VERSION,
     websiteUrl: absoluteUrl(MCP_PATH),
+    repository: { url: "https://github.com/ResBoost/MCP", source: "github" },
     icons: icons(),
     remotes: [{ type: "streamable-http", url: absoluteUrl(MCP_ENDPOINT_PATH) }],
   };

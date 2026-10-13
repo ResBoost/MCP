@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Copy the public MCP server's source from the Resboost app into src/.
-# The MCP layer and the formatters that shape its output only: the LonRes client, database, auth,
-# admin and environment config are private and never copied.
-# Usage: scripts/sync-from-resboost.sh [path to the Resboost app, default ../AIBoost]
+# Stage and validate the public source before replacing this repo's snapshot.
+# Usage: scripts/sync-from-resboost.sh [path to the Resboost app, default ../Resboost]
 set -euo pipefail
-cd "$(dirname "$0")/.."
-APP="${1:-../AIBoost}"
-[ -f "$APP/src/server/mcp/server.ts" ] || { echo "Resboost app not found at $APP" >&2; exit 1; }
-
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+APP="${1:-$REPO/../Resboost}"
+APP="$(cd "$APP" && pwd)"
+cd "$REPO"
+[ "$APP" != "$REPO" ] || { echo "Source must be the parent app, not this repo" >&2; exit 1; }
 FILES=(
     "src/app/api/mcp/route.ts"
     "src/app/.well-known/mcp/server.json/route.ts"
@@ -24,18 +23,23 @@ FILES=(
     "src/lib/property/types.ts"
     "src/lib/property/urls.ts"
 )
-
-rm -rf src
 for f in "${FILES[@]}"; do
-    mkdir -p "$(dirname "$f")"
-    cp "$APP/$f" "$f"
+    [ -f "$APP/$f" ] && [ ! -L "$APP/$f" ] || { echo "Missing or symlinked source file: $f" >&2; exit 1; }
 done
-
-# Guard: no secrets, private hosts or environment values may slip in
-PRIVATE='lonres\.dev|feeds_api|process\.env|API_KEY|SECRET|PASSWORD|AUTH_'
-if grep -rlE "$PRIVATE" src | grep -q .; then
-    echo "Refusing: a copied file mentions something private" >&2
-    grep -rnE "$PRIVATE" src >&2
-    exit 1
-fi
-echo "Synced $(find src -name '*.ts' | wc -l | tr -d ' ') files from $APP"
+STAGE="$(mktemp -d "$REPO/.sync-XXXXXX")"
+cleanup() {
+    # Restore the old snapshot if installing the staged directory failed.
+    if [ -d "$STAGE/previous" ] && [ ! -d "$REPO/src" ]; then
+        mv "$STAGE/previous" "$REPO/src"
+    fi
+    rm -rf "$STAGE"
+}
+trap cleanup EXIT
+for f in "${FILES[@]}"; do
+    mkdir -p "$STAGE/$(dirname "$f")"
+    cp "$APP/$f" "$STAGE/$f"
+done
+node scripts/check-release.mjs --source "$STAGE/src"
+if [ -d src ]; then mv src "$STAGE/previous"; fi
+mv "$STAGE/src" src
+echo "Synced ${#FILES[@]} public source files"

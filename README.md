@@ -1,12 +1,8 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/banner-light.svg">
-  <img alt="resboost.ai MCP — London homes for sale, for AI assistants" src="assets/banner-light.svg" width="100%">
-</picture>
+<h1>resboost.ai MCP</h1>
 
-<br/>
+London homes for sale, for AI assistants.
 
 [![Streamable HTTP](https://img.shields.io/badge/transport-streamable_HTTP-087f82?style=flat-square&labelColor=171a1d)](#getting-started)
 [![Read only](https://img.shields.io/badge/tools-2_read--only-087f82?style=flat-square&labelColor=171a1d)](#the-tools)
@@ -112,11 +108,11 @@ There are two, and they both just read:
 | `search_properties` | Homes for sale in London, lowest price first: by street, area or postcode district, price, bedrooms, bathrooms, property type, outside space and parking. Up to 50 results; it tells your assistant when to narrow down. |
 | `get_property` | Everything public about one listing: price and status, facts (tenure, lease, service charge, ground rent, EPC, floor, lift…), the agent's description, photo and floorplan counts, tour and video links, and the marketing agent's contact details. |
 
-Every answer comes back twice: as readable text, and as typed structured content (declared in each tool's `outputSchema`) that clients can rely on.
+Successful tool responses include readable text and typed structured content (declared in each tool's `outputSchema`) that clients can rely on.
 
 ## What it can and can't see
 
-- It only sees what LonRes already publishes for each listing, the same as the listing pages on resboost.ai. No accounts, no buyers, no personal data.
+- It only sees what LonRes already publishes for each listing, the same as the listing pages on resboost.ai. No buyer accounts or private buyer records; public marketing contact details may include a negotiator’s name.
 - It can't book viewings, make offers, send enquiries or change anything. It gives you the agent's own phone, email or WhatsApp, and you take it from there.
 - Search covers homes **for sale**. Rentals can't be searched yet, though a lettings listing can be read by its ID.
 - Addresses stop at the street and postcode district: never a flat or house number.
@@ -134,7 +130,7 @@ The tools label agent-written text as "not verified", so your assistant should p
 
 ## Found a problem?
 
-If it's a security issue, please [report it privately](https://github.com/LonRes/MCP/security/advisories/new) rather than opening a public issue. There's more in [SECURITY.md](SECURITY.md).
+If it's a security issue, please [report it privately](https://github.com/ResBoost/MCP/security/advisories/new) rather than opening a public issue. There's more in [SECURITY.md](SECURITY.md).
 
 For anything else (wrong data, a listing that looks off, ideas), issues are very welcome. If a listing's details are wrong, the marketing agent can correct them at source, and they'll update here too.
 
@@ -142,7 +138,7 @@ For anything else (wrong data, a listing that looks off, ideas), issues are very
 
 The code behind the public server is in [`src/`](src), so you can see exactly what each tool does and what it returns.
 
-It runs inside the resboost.ai app and uses the app's LonRes client and config, so it won't run on its own from this repo. It's here so it can be read and checked. [`scripts/sync-from-resboost.sh`](scripts/sync-from-resboost.sh) copies it across from the app, and refuses if anything private slips in.
+It runs inside the resboost.ai app and uses the app's LonRes client and config, so it won't run on its own from this repo. It's here so it can be read and checked. [`scripts/sync-from-resboost.sh`](scripts/sync-from-resboost.sh) copies it across from the app, and validates a staged copy before replacing the snapshot.
 
 | Where | What |
 |---|---|
@@ -153,10 +149,26 @@ It runs inside the resboost.ai app and uses the app's LonRes client and config, 
 | [`src/lib/property/present.ts`](src/lib/property/present.ts), [`format.ts`](src/lib/property/format.ts) | How listings are worded: the same formatters the website uses, so AI answers match the page |
 | [`src/lib/mcp/assistants.ts`](src/lib/mcp/assistants.ts) | The per-assistant setup guides shown on resboost.ai/mcp |
 
-## Brand assets
+## Release checks
 
-The [logo and favicon assets](assets/README.md) include light and dark SVG logos,
-a square mark, browser favicons and an Apple touch icon.
+This repository is a public source snapshot, not an independently deployable app.
+The check harness runs its real MCP SDK transport against a fake listing service;
+it never loads private app configuration or calls LonRes.
+
+```bash
+npm ci
+npm run check
+```
+
+The SDK, Zod and test runner versions are pinned in `package.json` and
+`package-lock.json`. CI runs these checks on pushes and pull requests.
+To check the deployed service, run `npm run check:live`. That makes one public
+search and one listing lookup and checks the handshake, tools and registry metadata.
+An empty sample search is reported as a failed check requiring manual verification.
+
+See [RELEASING.md](RELEASING.md) for the app deployment and publishing procedure.
+Source changes must also be applied to the parent app before deploying; syncing
+from an older app will replace this snapshot with that older implementation.
 
 ## Licence
 
@@ -165,8 +177,6 @@ The files in this repo are [MIT](LICENSE). The listing data the server returns i
 <br/>
 
 <div align="center">
-
-<img src="assets/resboost-mark.svg" alt="resboost.ai" width="56">
 
 <sub>Made in London by <a href="https://resboost.ai">resboost.ai</a> · listing data from <a href="https://www.lonres.com">LonRes</a></sub><br/>
 <sub><a href="CHANGELOG.md">Changelog</a> · <a href="SECURITY.md">Security</a></sub>

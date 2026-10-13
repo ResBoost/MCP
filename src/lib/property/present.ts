@@ -1,4 +1,4 @@
-import { SEARCH_RESULT_LIMIT } from "./constants";
+import { facetByTypeId, PROPERTY_TYPES, SEARCH_RESULT_LIMIT } from "./constants";
 import {
   formatArea,
   formatBedrooms,
@@ -11,6 +11,7 @@ import {
   postcodeDistrict,
 } from "./format";
 import type { Agent, Availability, MediaItem, MediaKind, PropertyDetail, SearchResult, Section } from "./types";
+import { districtPath, facetPath, isDistrict, SEARCH_PATH } from "./urls";
 
 /*
  * Listing-level presentation shared by the page organisms and the MCP text output, so the
@@ -155,4 +156,33 @@ export function describeResultCount(result: Pick<SearchResult, "items" | "capped
   return result.capped
     ? `Showing the first ${result.limit} matches · Lowest price first`
     : `${n} ${plural(n, "result")} · Lowest price first`;
+}
+
+export interface TrailStep {
+  label: string;
+  /** Site path; absent for steps with no page (lettings have no search). */
+  path?: string;
+}
+
+/** The facet page (flats, houses) a listing's type belongs to, or null. */
+export function listingFacet(propertyType: string | null) {
+  const type = PROPERTY_TYPES.find((t) => t.label.toLowerCase() === propertyType?.toLowerCase());
+  return type ? facetByTypeId(type.id) : null;
+}
+
+/**
+ * A listing's breadcrumb trail below the site root, shared by both listing templates and the
+ * JSON-LD: For sale › W9 › Flats › 12 Elgin Avenue. Rentals have no search page, so no links.
+ */
+export function listingTrail(p: Pick<PropertyDetail, "section" | "postcode" | "address" | "facts">): TrailStep[] {
+  if (p.section === "lettings") return [{ label: "To let" }, { label: p.address }];
+  const outward = postcodeDistrict(p.postcode);
+  const district = outward && isDistrict(outward) ? outward : null;
+  const facet = district ? listingFacet(p.facts.propertyType) : null;
+  return [
+    { label: "For sale", path: SEARCH_PATH },
+    ...(district ? [{ label: district, path: districtPath(district) }] : []),
+    ...(district && facet ? [{ label: facet.label, path: facetPath(district, facet.slug) }] : []),
+    { label: p.address },
+  ];
 }

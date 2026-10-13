@@ -11,7 +11,7 @@ const rpcError = (status: number, code: number, message: string, headers?: Heade
   Response.json({ jsonrpc: "2.0", error: { code, message }, id: null }, { status, headers });
 
 /**
- * DNS-rebinding protection: browsers always send Origin, so only this site (and localhost in
+ * DNS-rebinding protection: requests with Origin must come from this site (or localhost in
  * development) may call from a page. Non-browser MCP clients send no Origin and are allowed.
  */
 function originAllowed(request: Request) {
@@ -27,7 +27,8 @@ function originAllowed(request: Request) {
 
 /** Host allowlist (DNS rebinding): this site's host, plus localhost in development. */
 function hostAllowed(request: Request) {
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  // Validate the actual Host. Forwarded headers are safe only when a trusted proxy rewrites them.
+  const host = request.headers.get("host");
   if (!host) return false;
   if (host === new URL(env.NEXT_PUBLIC_SITE_URL).host) return true;
   return env.NODE_ENV === "development" && LOCAL_HOSTS.has(host.replace(/:\d+$/, ""));
@@ -40,8 +41,34 @@ export async function POST(request: Request) {
   if (Number(request.headers.get("content-length") ?? 0) > MAX_BODY_BYTES)
     return rpcError(413, -32600, "Request body too large.");
 
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_BODY_BYTES) return rpcError(413, -32600, "Request body too large.");
+  const reader = request.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  if (reader) {
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > MAX_BODY_BYTES) {
+          await reader.cancel();
+          return rpcError(413, -32600, "Request body too large.");
+        }
+        chunks.push(value);
+      }
+    } catch {
+      return rpcError(400, -32600, "Could not read request body.");
+    } finally {
+      reader.releaseLock();
+    }
+  }
+  const bytes = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const text = new TextDecoder().decode(bytes);
 
   let body: unknown;
   try {
@@ -56,8 +83,14 @@ export async function POST(request: Request) {
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
   });
-  await createMcpServer().connect(transport);
-  return transport.handleRequest(request, { parsedBody: body });
+  const server = createMcpServer();
+  try {
+    await server.connect(transport);
+    return await transport.handleRequest(request, { parsedBody: body });
+  } finally {
+    // JSON responses are complete before handleRequest returns; no SSE stream is kept open.
+    await server.close();
+  }
 }
 
 /** No sessions and no server-initiated stream in stateless mode. */
