@@ -1,0 +1,27 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "ai.resboost/homes",
+  "title": "resboost.ai London homes",
+  "description": "Search live London homes for sale and read full listings, straight from the estate agents marketing them (LonRes). Read-only, free, no sign-in.",
+  "version": "0.2.0",
+  "websiteUrl": "https://resboost.ai/mcp",
+  "repository": {
+    "url": "https://github.com/LonRes/MCP",
+    "source": "github"
+  },
+  "icons": [
+    {
+      "src": "https://resboost.ai/icon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://resboost.ai/api/mcp"
+    }
+  ]
+}
